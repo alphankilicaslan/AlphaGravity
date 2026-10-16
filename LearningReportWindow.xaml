@@ -1,0 +1,192 @@
+<Window x:Class="EnterpriseAIApp.LearningReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Yapay Zeka Analiz &amp; Öğrenme Raporu"
+        Icon="Assets/app.ico"
+        Height="620" Width="740"
+        WindowStartupLocation="CenterOwner"
+        Background="#161618" Foreground="#F5F5F7"
+        ResizeMode="CanResizeWithGrip"
+        WindowStyle="SingleBorderWindow"
+        FontFamily="Segoe UI, -apple-system, BlinkMacSystemFont, Aptos, sans-serif">
+    <Window.Resources>
+        <SolidColorBrush x:Key="BgCard" Color="#252528"/>
+        <SolidColorBrush x:Key="BorderSubtle" Color="#38383A"/>
+        <SolidColorBrush x:Key="AccentApple" Color="#0A84FF"/>
+        <SolidColorBrush x:Key="AccentAppleHover" Color="#0071E3"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F5F5F7"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#86868B"/>
+
+        <!-- Apple Standard Button Style -->
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="#2C2C2E"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#3A3A3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#242426"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Apple Primary Button -->
+        <Style x:Key="ApplePrimaryButton" TargetType="{x:Type Button}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="{StaticResource AccentApple}"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="18,7"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource AccentAppleHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#0062C4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Apple Segmented Tab Item -->
+        <Style TargetType="{x:Type TabItem}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="6" Margin="1,0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#2A2A2E"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#323236"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- HEADER -->
+        <Border Grid.Row="0" Background="{StaticResource BgCard}" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="#1E1E20" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="8" Width="42" Height="42" Margin="0,0,14,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtReportDocTitle" Text="Uygulama / Doküman Adı" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                    <TextBlock x:Name="TxtReportEngineStats" Text="Analiz Motoru: ... • Dosya Boyutu: ... • Paragraf: ..." FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,8"/>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Border Background="#1E1E20" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                            <TextBlock x:Name="TxtChipConcepts" Text="0 Kavram &amp; Kural" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextPrimary}"/>
+                        </Border>
+                        <Border Background="#1E1E20" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                            <TextBlock x:Name="TxtChipLinks" Text="0 Sinaps" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextPrimary}"/>
+                        </Border>
+                        <Border Background="#1E1E20" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="8,3">
+                            <TextBlock x:Name="TxtChipQA" Text="0 Soru-Cevap" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextPrimary}"/>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- DETAILS TABS (Apple Segmented Style) -->
+        <Border Grid.Row="1" Background="#1E1E20" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="10" Padding="8">
+            <TabControl Background="Transparent" BorderThickness="0">
+                <!-- TAB 1: ÇIKARILAN KAVRAMLAR VE KURALLAR -->
+                <TabItem Header="Keşfedilen Kavramlar &amp; Kurallar">
+                    <Border Background="{StaticResource BgCard}" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="PanelConceptsList" Margin="4"/>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
+                <!-- TAB 2: ANLAMSAL BAĞLANTILAR (SİNAPSLAR) -->
+                <TabItem Header="Kurulan Sinaps Bağlantıları">
+                    <Border Background="{StaticResource BgCard}" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="PanelRelationsList" Margin="4"/>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
+                <!-- TAB 3: MODEL HAFIZASI (SORU-CEVAP) -->
+                <TabItem Header="Yapay Zeka Hafızası">
+                    <Border Background="{StaticResource BgCard}" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="PanelQAList" Margin="4"/>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+            </TabControl>
+        </Border>
+
+        <!-- FOOTER ACTIONS -->
+        <Border Grid.Row="2" Margin="0,14,0,0">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="BtnDeleteUploadedDoc" Content="Belgeyi Sil / Geri Al" Click="BtnDeleteUploadedDoc_Click" DockPanel.Dock="Left"
+                        Background="#252528" Foreground="#FF453A" BorderBrush="{StaticResource BorderSubtle}" Padding="14,7"/>
+                <Button x:Name="BtnApproveReport" Style="{StaticResource ApplePrimaryButton}" Content="Onayla &amp; Ağda Görüntüle" Click="BtnApproveReport_Click" DockPanel.Dock="Right"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
