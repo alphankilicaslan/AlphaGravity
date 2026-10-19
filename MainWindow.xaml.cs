@@ -14,6 +14,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Net.Http;
+using System.Security.Cryptography;
 using EnterpriseAIApp.Models;
 using EnterpriseAIApp.Services;
 using ClosedXML.Excel;
@@ -228,14 +230,108 @@ namespace EnterpriseAIApp
             }
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private static string GetAlpTogetherDeviceHwid()
         {
-            Activate();
-            Focus();
+            try
+            {
+                string raw = $"ALPTOGETHER_SALT_2026_DEV_{Environment.MachineName.ToUpperInvariant()}_{Environment.UserName.ToUpperInvariant()}";
+                byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
+                string hex = Convert.ToHexString(hash);
+                return $"AT-{hex[..4]}-{hex[4..8]}-{hex[8..12]}-{hex[12..16]}";
+            }
+            catch
+            {
+                return "AT-UNKNOWN";
+            }
+        }
 
-            RefreshCompanyDropdown();
-            _ = CheckOllamaAndLoadModels();
-            _ = InitWebView2Async();
+        private static bool IsPrimaryDevMachine()
+        {
+            try
+            {
+                string machine = Environment.MachineName;
+                string user = Environment.UserName;
+                if (machine.Contains("MONSTER", StringComparison.OrdinalIgnoreCase) ||
+                    machine.Contains("ALPHAN", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (user.Contains("Alphan", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+
+        private async Task<bool> CheckCloudWhitelistAsync()
+        {
+            if (IsPrimaryDevMachine()) return true;
+
+            try
+            {
+                string hwid = GetAlpTogetherDeviceHwid();
+                string firebaseUrl = $"https://alpnet-d0bc4-default-rtdb.europe-west1.firebasedatabase.app/alptogether/users/{hwid}.json?auth=ExNWZwF2CkByKFILhfQ2BbTpuxYFlFAUO8quWwfc";
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+                using var http = new HttpClient();
+                var resp = await http.GetAsync(firebaseUrl, cts.Token);
+                if (!resp.IsSuccessStatusCode) return false;
+
+                string json = await resp.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(json) || json == "null") return false;
+
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("appPermissions", out var perms) &&
+                    perms.TryGetProperty("alphagravity", out var gravPerm))
+                {
+                    bool hasAccess = gravPerm.TryGetProperty("hasAccess", out var acc) && acc.GetBoolean();
+                    if (hasAccess)
+                    {
+                        string expiresAt = gravPerm.TryGetProperty("expiresAt", out var exp) ? exp.GetString() ?? "" : "";
+                        int durationDays = gravPerm.TryGetProperty("durationDays", out var dur) ? dur.GetInt32() : 0;
+                        if (durationDays >= 9999 || expiresAt.StartsWith("9999"))
+                            return true;
+
+                        if (DateTime.TryParse(expiresAt, out DateTime expDate))
+                        {
+                            if (DateTime.Now <= expDate) return true;
+                        }
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Activate();
+                Focus();
+
+                bool isWhitelisted = await CheckCloudWhitelistAsync();
+                if (!isWhitelisted)
+                {
+                    string hwid = GetAlpTogetherDeviceHwid();
+                    MessageBox.Show(
+                        "⛔ AlphaGravity Bulut Whitelist Doğrulanamadı!\n\n" +
+                        "Bu bilgisayar için aktif bir AlphaGravity kullanım yetkisi bulunamadı veya süresi dolmuş.\n\n" +
+                        "Lütfen AlpTogether üzerinden yetkinizi kontrol ediniz veya yönetici (Alphan) ile iletişime geçiniz.\n\n" +
+                        $"Cihaz HWID: {hwid}",
+                        "Kullanım İzni Gerekli", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Application.Current.Shutdown();
+                    return;
+                }
+
+                RefreshCompanyDropdown();
+                _ = CheckOllamaAndLoadModels();
+                _ = InitWebView2Async();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MainWindow_Loaded error: {ex}");
+            }
         }
 
         private async Task InitWebView2Async()

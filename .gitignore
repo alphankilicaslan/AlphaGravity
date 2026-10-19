@@ -18,3 +18,8 @@ __pycache__/
 
 *.onnx
 Data/
+
+debug_*.html
+debug_*.log
+test_*.js
+*.log

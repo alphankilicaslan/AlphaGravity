@@ -9,6 +9,13 @@ public partial class App : Application
 {
     public App()
     {
+
+        TaskScheduler.UnobservedTaskException += (s, e) =>
+        {
+            try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash_log.txt"), $"[Task Error]: {e.Exception}\n"); } catch { }
+            e.SetObserved();
+        };
+
         this.DispatcherUnhandledException += (s, e) =>
         {
             try { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash_log.txt"), $"[Dispatcher Error]: {e.Exception}\n{e.Exception.StackTrace}"); } catch { }
