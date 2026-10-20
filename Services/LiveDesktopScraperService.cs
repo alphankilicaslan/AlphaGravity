@@ -78,10 +78,12 @@ namespace EnterpriseAIApp.Services
         private const int SW_SHOW = 5;
 
         private readonly CompanyManager _companyManager;
+        private readonly KnowledgeGraphManager? _knowledgeGraphManager;
 
-        public LiveDesktopScraperService(CompanyManager companyManager)
+        public LiveDesktopScraperService(CompanyManager companyManager, KnowledgeGraphManager? knowledgeGraphManager = null)
         {
             _companyManager = companyManager;
+            _knowledgeGraphManager = knowledgeGraphManager;
         }
 
         public async Task<LiveDesktopScraperResult> ScrapeLiveApplicationAsync(
@@ -125,8 +127,25 @@ namespace EnterpriseAIApp.Services
                 // 3. Canlı Finansal Metriklerin Çıkarılması (Hibrit Durum Denetimi & SQLite Doğrulaması)
                 ExtractLiveFinancialMetrics(company, result);
 
+                // 4. Snaps Bilgi Ağına Dinamik Besleme
+                if (_knowledgeGraphManager != null)
+                {
+                    try
+                    {
+                        var ingestResult = _knowledgeGraphManager.IngestScrapedMetrics(company, result);
+                        if (ingestResult.Success)
+                        {
+                            result.ScrapedTexts.Add($"[Snaps Ağı Entegrasyonu]: {ingestResult.CreatedOrUpdatedNodes.Count} canlı metrik düğümü ve {ingestResult.CreatedLinks.Count} sinaps bağı Bilgi Ağına başarıyla aktarıldı.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        result.ScrapedTexts.Add($"[Snaps Ağı Senkronizasyon Uyarısı]: {ex.Message}");
+                    }
+                }
+
                 result.Success = true;
-                result.Message = "AlpFinans masaüstü uygulaması başarıyla taranarak canlı finansal metrikler çıkarıldı.";
+                result.Message = "AlpFinans masaüstü uygulaması başarıyla taranarak canlı finansal metrikler çıkarıldı ve Snaps Ağına beslendi.";
             }
             catch (Exception ex)
             {

@@ -107,6 +107,17 @@ namespace EnterpriseAIApp.Services
         [DllImport("user32.dll")]
         private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PrintWindow(IntPtr hwnd, IntPtr hdcBlt, uint nFlags);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
+
+        private const uint PW_CLIENTONLY = 0x00000001;
+        private const uint PW_RENDERFULLCONTENT = 0x00000002;
+        private const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
         [DllImport("gdi32.dll")]
         private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
 
@@ -1331,11 +1342,22 @@ try {{
                 GetWindowText(targetHwnd, sbTitle, sbTitle.Capacity);
                 targetTitle = sbTitle.ToString().Trim();
 
-                GetWindowRect(targetHwnd, out RECT rect);
-                x = rect.Left;
-                y = rect.Top;
-                width = Math.Max(100, rect.Width);
-                height = Math.Max(100, rect.Height);
+                // Multi-DPI aware true client/frame rect
+                if (DwmGetWindowAttribute(targetHwnd, DWMWA_EXTENDED_FRAME_BOUNDS, out RECT dwmRect, Marshal.SizeOf<RECT>()) == 0)
+                {
+                    x = dwmRect.Left;
+                    y = dwmRect.Top;
+                    width = Math.Max(100, dwmRect.Width);
+                    height = Math.Max(100, dwmRect.Height);
+                }
+                else
+                {
+                    GetWindowRect(targetHwnd, out RECT rect);
+                    x = rect.Left;
+                    y = rect.Top;
+                    width = Math.Max(100, rect.Width);
+                    height = Math.Max(100, rect.Height);
+                }
             }
             else
             {
@@ -1352,30 +1374,56 @@ try {{
                 }
             }
 
-            IntPtr hdcSrc = GetWindowDC(GetDesktopWindow());
-            IntPtr hdcDest = CreateCompatibleDC(hdcSrc);
-            IntPtr hBitmap = CreateCompatibleBitmap(hdcSrc, width, height);
-            IntPtr hOld = SelectObject(hdcDest, hBitmap);
+            IntPtr desktopHwnd = GetDesktopWindow();
+            IntPtr hdcSrc = IntPtr.Zero;
+            IntPtr hdcDest = IntPtr.Zero;
+            IntPtr hBitmap = IntPtr.Zero;
+            IntPtr hOld = IntPtr.Zero;
 
-            BitBlt(hdcDest, 0, 0, width, height, hdcSrc, x, y, SRCCOPY);
+            try
+            {
+                hdcSrc = GetWindowDC(desktopHwnd);
+                hdcDest = CreateCompatibleDC(hdcSrc);
+                hBitmap = CreateCompatibleBitmap(hdcSrc, width, height);
+                hOld = SelectObject(hdcDest, hBitmap);
 
-            SelectObject(hdcDest, hOld);
-            DeleteDC(hdcDest);
-            ReleaseDC(GetDesktopWindow(), hdcSrc);
+                bool capturedViaPrintWindow = false;
+                if (isWindowCapture)
+                {
+                    try
+                    {
+                        capturedViaPrintWindow = PrintWindow(targetHwnd, hdcDest, PW_RENDERFULLCONTENT);
+                    }
+                    catch { }
+                }
 
-            var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(
-                hBitmap,
-                IntPtr.Zero,
-                Int32Rect.Empty,
-                BitmapSizeOptions.FromEmptyOptions());
+                if (!capturedViaPrintWindow)
+                {
+                    BitBlt(hdcDest, 0, 0, width, height, hdcSrc, x, y, SRCCOPY);
+                }
 
-            DeleteObject(hBitmap);
+                SelectObject(hdcDest, hOld);
+                hOld = IntPtr.Zero;
 
-            using var ms = new MemoryStream();
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-            encoder.Save(ms);
-            return (ms.ToArray(), width, height, targetTitle);
+                var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(
+                    hBitmap,
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+                using var ms = new MemoryStream();
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                encoder.Save(ms);
+                return (ms.ToArray(), width, height, targetTitle);
+            }
+            finally
+            {
+                if (hOld != IntPtr.Zero && hdcDest != IntPtr.Zero) SelectObject(hdcDest, hOld);
+                if (hBitmap != IntPtr.Zero) DeleteObject(hBitmap);
+                if (hdcDest != IntPtr.Zero) DeleteDC(hdcDest);
+                if (hdcSrc != IntPtr.Zero) ReleaseDC(desktopHwnd, hdcSrc);
+            }
         }
 
         #region Tool 6: desktop_window_control

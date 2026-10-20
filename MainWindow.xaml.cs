@@ -65,7 +65,7 @@ namespace EnterpriseAIApp
             _documentScanner = new DocumentScanner(_companyManager, _knowledgeGraphManager, _trainingManager, _ollamaClient, _geminiClient);
             _appInspector = new AppInspector(_companyManager, _knowledgeGraphManager, _trainingManager, _ollamaClient, _geminiClient);
             _appAutomationEngine = new AppAutomationEngine(_companyManager, _knowledgeGraphManager, _trainingManager, _toolEngine);
-            _liveDesktopScraperService = new LiveDesktopScraperService(_companyManager);
+            _liveDesktopScraperService = new LiveDesktopScraperService(_companyManager, _knowledgeGraphManager);
             _sessionManager = new ChatSessionManager(_companyManager);
             _dbService = new DatabaseReverseEngineerService(_companyManager, _knowledgeGraphManager);
 
@@ -1383,6 +1383,7 @@ namespace EnterpriseAIApp
             if (ViewGraph != null) ViewGraph.Visibility = Visibility.Visible;
             if (ViewDatabase != null) ViewDatabase.Visibility = Visibility.Collapsed;
             if (ViewTools != null) ViewTools.Visibility = Visibility.Collapsed;
+            try { _ = KnowledgeGraphWebView?.CoreWebView2?.ExecuteScriptAsync("window.resumeRenderLoop && window.resumeRenderLoop();"); } catch { }
         }
 
         private void TabBtnDatabase_Checked(object sender, RoutedEventArgs e)
@@ -1390,6 +1391,7 @@ namespace EnterpriseAIApp
             if (ViewGraph != null) ViewGraph.Visibility = Visibility.Collapsed;
             if (ViewDatabase != null) ViewDatabase.Visibility = Visibility.Visible;
             if (ViewTools != null) ViewTools.Visibility = Visibility.Collapsed;
+            try { _ = KnowledgeGraphWebView?.CoreWebView2?.ExecuteScriptAsync("window.pauseRenderLoop && window.pauseRenderLoop();"); } catch { }
             RefreshDatabaseList(_companyManager.ActiveCompany);
         }
 
@@ -1398,6 +1400,7 @@ namespace EnterpriseAIApp
             if (ViewGraph != null) ViewGraph.Visibility = Visibility.Collapsed;
             if (ViewDatabase != null) ViewDatabase.Visibility = Visibility.Collapsed;
             if (ViewTools != null) ViewTools.Visibility = Visibility.Visible;
+            try { _ = KnowledgeGraphWebView?.CoreWebView2?.ExecuteScriptAsync("window.pauseRenderLoop && window.pauseRenderLoop();"); } catch { }
         }
 
         private TextBlock AddMessageBubble(ChatMessage msg)
